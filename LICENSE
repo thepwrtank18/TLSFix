@@ -23,5 +23,5 @@ SOFTWARE.
 ---
 
 The MIT license above covers TLSFix's own code. This repository also vendors
-Mbed TLS (under src/include/ and src/lib/), which is licensed separately by its authors
+Mbed TLS (git submodule at `src/mbedtls-src/`), which is licensed separately by its authors
 under the Apache-2.0 license. See https://github.com/Mbed-TLS/mbedtls.
