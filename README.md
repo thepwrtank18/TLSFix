@@ -1,25 +1,24 @@
 # TLSFix
 
 > [!WARNING]  
-> This is entirely vibecoded. Beyond nfzerox's great work for iOS 3-9, I did not write a single line of code. Human contributions are welcome and very appreciated.
+> This is entirely vibecoded. Beyond nfzerox's great work for iOS 3-9, I did not write a single line of code. Human contributions are welcome.
 
 Modern HTTPS for legacy **Mac OS X 10.8** (Mountain Lion).
 
 <img src="src/screenshots/TLSFix.png" align="left" width="300" style="margin-right: 20px;"
      alt="howsmyssl.com in Safari on a Mac OS X 10.8.5 virtual machine, with a signed-in iTunes instance in the background playing Kalimba by Mr. Scruff">
 
-Old versions of macOS can no longer open most of today's websites. The TLS built into OS X 10.8
-doesn't speak modern ciphers, key exchanges, or certificate authorities. Safari, the Mac App Store,
-iTunes, and many apps fail on sites that work fine everywhere else.
+macOS 10.13 High Sierra and earlier cannot complete TLS handshakes with most current HTTPS servers. 
+The system TLS stack lacks modern ciphers, key exchanges, and root CAs. Safari, the Mac App Store, iTunes, 
+and many other apps fail on sites that work on newer systems.
 
 TLSFix reroutes HTTPS through a bundled copy of [mbedTLS](https://github.com/Mbed-TLS/mbedtls) 3.6,
-so your Mac can reach modern servers again: TLS 1.2 and TLS 1.3, modern ciphers (ChaCha20-Poly1305, AES-GCM), 
-and modern certificates (the same ones Let's Encrypt and friends use today). 
-Certificates are properly verified against an up-to-date trust list, 
-so this restores security, it doesn't disable it.
+adding TLS 1.2 and TLS 1.3, ChaCha20-Poly1305 and AES-GCM ciphers, and roots from the same CAs
+Let's Encrypt uses. Verification runs against `/usr/lib/tlsfix-cacert.pem`; the shim does not skip
+certificate checks.
 
-Currently, only Mac OS X 10.8.5 Mountain Lion is supported; x86_64 (64-bit) working, i386 (32-bit) untested.
-Confirmed on VMware, real devices should work the same way.
+Only Mac OS X 10.8.5 Mountain Lion is currently supported. x86_64 is confirmed working; i386 is untested.
+Tested on VMware; the same install path applies to physical hardware.
 
 ---
 
@@ -28,7 +27,7 @@ Confirmed on VMware, real devices should work the same way.
 **Requirements:** Mac OS X **10.8.5** (Mountain Lion), Intel (i386 + x86_64).
 
 1. Download **`TLSFix-1.0.pkg`** from the [Releases](https://github.com/nfzerox/TLSFix/releases) page.
-2. Install it — double-click the package in Finder, or from Terminal:
+2. Install it: double-click the package in Finder, or from Terminal:
 
    ```bash
    sudo installer -pkg ~/Downloads/TLSFix-1.0.pkg -target /
@@ -37,9 +36,9 @@ Confirmed on VMware, real devices should work the same way.
 3. **Reboot when prompted.** The installer requires a restart (TLSFix is wired in via
    `/etc/launchd.conf`).
 
-After reboot, open Safari and visit [howsmyssl.com](https://www.howsmyssl.com/a/check) — you should
-see TLS 1.2 or 1.3 instead of TLS 1.0. The Mac App Store and iTunes Store should also work, albeit
-with errors when attempting to sign in.
+After reboot, open Safari and visit [howsmyssl.com](https://www.howsmyssl.com/a/check). The report
+should show TLS 1.2 or 1.3 instead of TLS 1.0. The Mac App Store and iTunes Store load again, though
+sign-in may still error.
 
 ### What the installer does
 
@@ -101,7 +100,7 @@ curl -fsSL https://curl.se/ca/cacert.pem -o /usr/lib/tlsfix-cacert.pem
 sudo chmod 644 /usr/lib/tlsfix-cacert.pem
 ```
 
-No reboot needed — the shim reads the file on each process launch.
+No reboot needed. The shim reads the file on each process launch.
 
 ---
 
