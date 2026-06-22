@@ -5,6 +5,9 @@
 
 Modern HTTPS for legacy **Mac OS X 10.8** (Mountain Lion).
 
+<img src="src/screenshots/TLSFix.png" align="left" width="300" style="margin-right: 20px;"
+     alt="howsmyssl.com in Safari on a Mac OS X 10.8.5 virtual machine, with a signed-in iTunes instance in the background playing Kalimba by Mr. Scruff">
+
 Old versions of macOS can no longer open most of today's websites. The TLS built into OS X 10.8
 doesn't speak modern ciphers, key exchanges, or certificate authorities. Safari, the App Store,
 iTunes, and many apps fail on sites that work fine everywhere else.
