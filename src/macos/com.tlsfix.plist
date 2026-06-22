@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Global options, all ON by default. -->
+	<key>tls13</key><true/>             <!-- allow negotiating TLS 1.3 (off -> cap at TLS 1.2) -->
+	<key>drainGuard</key><true/>        <!-- bound the TLS 1.3 post-handshake drain loop (safety) -->
+	<key>systemFallback</key><true/>    <!-- on mbedTLS handshake failure, retry the host on the system's own TLS -->
+	<key>debug</key><false/>            <!-- syslog handshake/SNI lines (Console.app / `syslog`) -->
+	<!-- Per-process opt-out: add  <key>disable-PROCNAME</key><true/>  to bypass a specific process,
+	     e.g. <key>disable-App Store</key><true/>. Boot/security-critical daemons are always skipped. -->
+</dict>
+</plist>

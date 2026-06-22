@@ -1,6 +1,10 @@
-mbedtls-src/
 .mbobj/
 .stage/
 *.dylib
-TLSFix.bundle/
+*.pkg
+*.tgz
+*.deb
+src/macos/lib/
+src/macos/.tlsfix-*
+src/macos/.mbobj-*
 .DS_Store

@@ -1,0 +1,6 @@
+[submodule "src/macos/vendor/fishhook"]
+	path = src/macos/vendor/fishhook
+	url = https://github.com/facebook/fishhook.git
+[submodule "src/mbedtls-src"]
+	path = src/mbedtls-src
+	url = https://github.com/Mbed-TLS/mbedtls.git

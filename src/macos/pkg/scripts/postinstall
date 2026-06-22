@@ -1,0 +1,82 @@
+#!/bin/bash
+# TLSFix postinstall - wire up system-wide TLS shimming on Mac OS X 10.8.
+#
+# The payload has already placed:
+#   /usr/lib/tlsfix.dylib                          the shim (fat i386 + x86_64, ad-hoc signed)
+#   /usr/lib/tlsfix-cacert.pem                     modern CA bundle
+#   /usr/local/share/tlsfix/com.tlsfix.plist       default options
+#   /usr/local/share/tlsfix/uninstall.sh           the uninstaller
+#   /usr/local/share/tlsfix/dyld.patched           pre-patched + ad-hoc-signed dyld (if built)
+#   /usr/local/share/tlsfix/dyld.stock.sha256      sha256 of the stock dyld it was derived from
+#   /usr/local/share/tlsfix/dyld.patched.sha256    sha256 of dyld.patched itself
+#
+# This script: installs default prefs (without clobbering existing ones), enables system-wide
+# DYLD_INSERT_LIBRARIES via /etc/launchd.conf, patches+re-signs /usr/lib/dyld so entitled binaries
+# are injected too, and drops a single-user recovery helper. Everything is backed up first.
+LOG=/var/log/tlsfix-install.log
+echo "=== TLSFix postinstall $(date) ===" >>"$LOG" 2>&1
+
+BK=/var/db/tlsfix-backup
+mkdir -p "$BK" 2>>"$LOG"
+
+# ---- 1) default prefs (preserve existing user settings) --------------------
+if [ ! -f /Library/Preferences/com.tlsfix.plist ]; then
+  cp /usr/local/share/tlsfix/com.tlsfix.plist /Library/Preferences/com.tlsfix.plist 2>>"$LOG"
+  chmod 644 /Library/Preferences/com.tlsfix.plist 2>>"$LOG"
+fi
+chmod 644 /usr/lib/tlsfix.dylib /usr/lib/tlsfix-cacert.pem 2>>"$LOG"
+
+# ---- 2) system-wide injection (launchd reads this at boot) -----------------
+LINE="setenv DYLD_INSERT_LIBRARIES /usr/lib/tlsfix.dylib"
+touch /etc/launchd.conf
+grep -v 'DYLD_INSERT_LIBRARIES.*tlsfix.dylib' /etc/launchd.conf > /etc/launchd.conf.tmp 2>/dev/null || true
+mv /etc/launchd.conf.tmp /etc/launchd.conf 2>/dev/null || true
+echo "$LINE" >> /etc/launchd.conf
+chmod 644 /etc/launchd.conf
+
+# ---- 3) swap in the pre-patched + signed dyld so entitled binaries honour the insert -------
+# The patched, ad-hoc-signed dyld was produced at build time (a target generally has no working
+# codesign_allocate, so we never sign here). We install it ONLY when the machine's current
+# /usr/lib/dyld byte-for-byte matches the exact stock build it was derived from (sha256). On any
+# other build we leave the stock linker untouched: basic injection into non-entitled processes still
+# works, and we never risk an unbootable linker.
+PD=/usr/local/share/tlsfix/dyld.patched
+STOCK_SHA=/usr/local/share/tlsfix/dyld.stock.sha256
+PATCH_SHA=/usr/local/share/tlsfix/dyld.patched.sha256
+if [ -f "$PD" ] && [ -f "$STOCK_SHA" ] && [ -f "$PATCH_SHA" ]; then
+  EXP="$(cat "$STOCK_SHA")"
+  PHASH="$(cat "$PATCH_SHA")"
+  CUR="$(shasum -a 256 /usr/lib/dyld 2>/dev/null | awk '{print $1}')"
+  if [ "$CUR" = "$PHASH" ]; then
+    echo "dyld: already the TLSFix-patched build; leaving as-is" >>"$LOG"
+  elif [ "$CUR" = "$EXP" ]; then
+    [ -f "$BK/dyld.orig" ] || cp /usr/lib/dyld "$BK/dyld.orig" 2>>"$LOG"
+    NEW=/usr/lib/dyld.tlsfix-new
+    if cp "$PD" "$NEW" 2>>"$LOG"; then
+      chmod 755 "$NEW"; chown root:wheel "$NEW"
+      /bin/mv -f "$NEW" /usr/lib/dyld 2>>"$LOG" && echo "dyld: installed pre-patched build (stock matched)" >>"$LOG"
+    fi
+  else
+    echo "WARNING: /usr/lib/dyld sha256=$CUR matches neither the expected stock ($EXP) nor the" >>"$LOG"
+    echo "         patched build ($PHASH) - leaving stock dyld. Entitled apps (Safari, App Store," >>"$LOG"
+    echo "         iTunes) will NOT be shimmed on this OS build." >>"$LOG"
+  fi
+else
+  echo "NOTE: no bundled patched dyld in this package - skipping dyld patch" >>"$LOG"
+fi
+
+# ---- 4) single-user recovery helper ----------------------------------------
+cat > "$BK/RECOVER.sh" <<'EOF'
+#!/bin/bash
+# If a patched dyld ever prevents boot: power on holding Cmd-S (single-user mode), then run:
+#   /sbin/mount -uw /
+#   /bin/bash /var/db/tlsfix-backup/RECOVER.sh
+#   reboot
+cp /var/db/tlsfix-backup/dyld.orig /usr/lib/dyld
+sed -i '' '/DYLD_INSERT_LIBRARIES.*tlsfix.dylib/d' /etc/launchd.conf 2>/dev/null
+echo "Restored stock dyld and removed launchd.conf injection. Now: reboot"
+EOF
+chmod 755 "$BK/RECOVER.sh"
+
+echo "TLSFix installed. A REBOOT is required for system-wide effect." >>"$LOG"
+exit 0
