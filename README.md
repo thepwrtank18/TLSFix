@@ -9,12 +9,17 @@ Modern HTTPS for legacy **Mac OS X 10.8** (Mountain Lion).
      alt="howsmyssl.com in Safari on a Mac OS X 10.8.5 virtual machine, with a signed-in iTunes instance in the background playing Kalimba by Mr. Scruff">
 
 Old versions of macOS can no longer open most of today's websites. The TLS built into OS X 10.8
-doesn't speak modern ciphers, key exchanges, or certificate authorities. Safari, the App Store,
+doesn't speak modern ciphers, key exchanges, or certificate authorities. Safari, the Mac App Store,
 iTunes, and many apps fail on sites that work fine everywhere else.
 
 TLSFix reroutes HTTPS through a bundled copy of [mbedTLS](https://github.com/Mbed-TLS/mbedtls) 3.6,
-so your Mac can reach modern servers again: TLS 1.2 and TLS 1.3, modern ciphers, and up-to-date
-certificate verification.
+so your Mac can reach modern servers again: TLS 1.2 and TLS 1.3, modern ciphers (ChaCha20-Poly1305, AES-GCM), 
+and modern certificates (the same ones Let's Encrypt and friends use today). 
+Certificates are properly verified against an up-to-date trust list, 
+so this restores security, it doesn't disable it.
+
+Currently, only Mac OS X 10.8.5 Mountain Lion is supported; x86_64 (64-bit) working, i386 (32-bit) untested.
+Confirmed on VMware, real devices should work the same way.
 
 ---
 
