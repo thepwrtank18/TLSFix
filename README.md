@@ -26,7 +26,8 @@ certificate verification.
    sudo installer -pkg ~/Downloads/TLSFix-1.0.pkg -target /
    ```
 
-3. **Reboot.** TLSFix is wired in via `/etc/launchd.conf`, which is only read at boot.
+3. **Reboot when prompted.** The installer requires a restart (TLSFix is wired in via
+   `/etc/launchd.conf`).
 
 After reboot, open Safari and visit [howsmyssl.com](https://www.howsmyssl.com/a/check) — you should
 see TLS 1.2 or 1.3 instead of TLS 1.0. The Mac App Store and iTunes Store should also work, albeit
@@ -105,36 +106,25 @@ Building from source requires **Xcode 4.6.3** or the Xcode Command Line Tools (`
 > A stock 10.8 machine cannot clone this repo because, ironically, you need TLS 1.3. Clone on a
 > modern machine with `git clone --recursive`, then copy the tree to your 10.8 Mac.
 
-### Quick build
+### Quick build (with git, on a machine that has TLS 1.3 support)
 
 ```bash
 git clone --recursive https://github.com/nfzerox/TLSFix.git
 cd TLSFix/src/macos
-chmod +x build-all.sh build-mbedtls-mac.sh build-mac.sh pkg/build-pkg.sh
-./build-all.sh
+bash build-all.sh
+```
+
+### Quick build (manual copy to 10.8)
+
+On a machine with working HTTPS, clone once with submodules, then copy the entire `TLSFix` folder to
+the 10.8 Mac (must include `src/mbedtls-src/` and `src/macos/vendor/fishhook/`):
+
+```bash
+cd TLSFix/src/macos
+bash build-all.sh
 ```
 
 Output: `src/macos/pkg/TLSFix-1.0.pkg`
-
-### Manual build steps
-
-```bash
-# from repo root — init mbedTLS (v3.6.0) + fishhook submodules
-git submodule update --init --recursive
-
-cd src/macos
-
-# 1. Build mbedTLS static libraries (lib/libmbed-mac-{x86_64,i386}.a)
-./build-mbedtls-mac.sh
-
-# 2. Link the shim
-./build-mac.sh
-export CODESIGN_ALLOCATE="$(xcrun -f codesign_allocate)"
-codesign -f -s - tlsfix.dylib
-
-# 3. Package
-cd pkg && ./build-pkg.sh
-```
 
 ### How it works
 

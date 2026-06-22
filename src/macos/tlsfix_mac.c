@@ -709,9 +709,7 @@ static void do_ready(void) {
 }
 static int ensure_ready(void) { pthread_once(&g_once, do_ready); return g_state; }
 
-// Boot/security-critical processes we never touch: a crash here could keep the box from booting,
-// and the trust/keychain daemons must keep using the system stack. (The App Store and its store*
-// daemons are deliberately NOT here — fixing them is the whole point.)
+// blacklisted processes; doesn't need internet, if it does it needs to use the system stack
 static int proc_is_denied(const char *pn) {
     if (!pn) return 1;
     static const char *deny[] = {
@@ -720,7 +718,7 @@ static int proc_is_denied(const char *pn) {
         "mds", "mds_stores", "mdworker", "mdflagwriter", "mDNSResponder", "mDNSResponderHelper",
         "coreservicesd", "installd", "install_monitored", "fseventsd", "hidd", "powerd",
         "loginwindow", "WindowServer", "dyld", "sh", "bash", "zsh", "ssh", "sshd", "scp",
-        "sudo", "su", "login", "dtrace", "dtruss", 0
+        "sudo", "su", "login", "dtrace", "dtruss", "Terminal", 0
     };
     for (int i = 0; deny[i]; i++) if (strcmp(pn, deny[i]) == 0) return 1;
     return 0;

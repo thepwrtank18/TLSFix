@@ -3,6 +3,21 @@
     <title>TLSFix __VERSION__</title>
     <organization>com.tlsfix</organization>
     <options customize="never" rootVolumeOnly="true"/>
+
+    <installation-check script="tlsfix_os_check();"/>
+    <script><![CDATA[
+function tlsfix_os_check() {
+    var v = system.version.ProductVersion;
+    if ((system.compareVersions(v, '10.8.5') < 0) || (system.compareVersions(v, '10.9') >= 0)) {
+        my.result.title = 'Unsupported Mac OS X Version';
+        my.result.message = 'TLSFix requires Mac OS X 10.8.5 (Mountain Lion).\n\nThis Mac is running ' + v + '.';
+        my.result.type = 'Fatal';
+        return false;
+    }
+    return true;
+}
+    ]]></script>
+
     <choices-outline>
         <line choice="default">
             <line choice="com.tlsfix.installer"/>
@@ -12,5 +27,5 @@
     <choice id="com.tlsfix.installer" visible="false">
         <pkg-ref id="com.tlsfix.installer"/>
     </choice>
-    <pkg-ref id="com.tlsfix.installer" version="__VERSION__" onConclusion="none">TLSFix-component.pkg</pkg-ref>
+    <pkg-ref id="com.tlsfix.installer" version="__VERSION__" onConclusion="requireRestart">TLSFix-component.pkg</pkg-ref>
 </installer-gui-script>
